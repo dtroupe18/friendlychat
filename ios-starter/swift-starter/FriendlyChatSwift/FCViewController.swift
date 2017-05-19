@@ -167,6 +167,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                         cell.setNeedsLayout()
                     }
                 }
+                
             } else if let URL = URL(string: imageURL), let data = try? Data(contentsOf: URL) {
                 cell.imageView?.image = UIImage.init(data: data)
             }
