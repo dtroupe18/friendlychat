@@ -27,8 +27,18 @@ class SignInViewController: UIViewController, GIDSignInUIDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
     GIDSignIn.sharedInstance().uiDelegate = self
-  }
-
-  deinit {
-  }
+    GIDSignIn.sharedInstance().signInSilently()
+    handle = Auth.auth().addStateDidChangeListener() { (auth, user) in
+        if user != nil {
+            MeasurementHelper.sendLoginEvent()
+            self.performSegue(withIdentifier: Constants.Segues.SignInToFp, sender: nil)
+        }
+    }
+    }
+    
+    deinit {
+        if let handle = handle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
 }

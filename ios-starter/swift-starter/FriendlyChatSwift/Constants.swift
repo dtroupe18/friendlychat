@@ -14,6 +14,8 @@
 //  limitations under the License.
 //
 
+import Firebase
+
 struct Constants {
 
   struct NotificationKeys {
@@ -31,4 +33,6 @@ struct Constants {
     static let photoURL = "photoURL"
     static let imageURL = "imageURL"
   }
+    
+    
 }

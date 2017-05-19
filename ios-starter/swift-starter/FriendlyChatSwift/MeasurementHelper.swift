@@ -18,12 +18,15 @@ import Firebase
 
 class MeasurementHelper: NSObject {
 
-  static func sendLoginEvent() {
-  }
-
-  static func sendLogoutEvent() {
-  }
-
-  static func sendMessageEvent() {
-  }
+    static func sendLoginEvent() {
+        Analytics.logEvent(AnalyticsEventLogin, parameters: nil)
+    }
+    
+    static func sendLogoutEvent() {
+        Analytics.logEvent("logout", parameters: nil)
+    }
+    
+    static func sendMessageEvent() {
+        Analytics.logEvent("message", parameters: nil)
+    }
 }
