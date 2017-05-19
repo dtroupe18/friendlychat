@@ -159,7 +159,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                         return
                     }
                     
-                    // THREADING.... DISPATCH SOMETHING ON THE MAIN THREAD
+                    // THREADING.... DISPATCH SOMETHING IN THE MAIN THREAD
                     DispatchQueue.main.async {
                         
                         // USE OF REGULAR TABLEVIEW CELL NOT A CUSTOM CELL
@@ -167,14 +167,17 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                         cell.setNeedsLayout()
                     }
                 }
-                
+                // TRY URL DOESN'T HAVE "GS://" PREFIX
             } else if let URL = URL(string: imageURL), let data = try? Data(contentsOf: URL) {
                 cell.imageView?.image = UIImage.init(data: data)
             }
             cell.textLabel?.text = "sent by: \(name)"
-        } else {
+        }
+        // NO IMAGE!
+        else {
             let text = message[Constants.MessageFields.text] ?? ""
             cell.textLabel?.text = name + ": " + text
+            // DEFAULT IMAGE
             cell.imageView?.image = UIImage(named: "ic_account_circle")
             if let photoURL = message[Constants.MessageFields.photoURL], let URL = URL(string: photoURL),
                 let data = try? Data(contentsOf: URL) {
