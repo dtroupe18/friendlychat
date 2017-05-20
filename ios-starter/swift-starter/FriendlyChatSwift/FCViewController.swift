@@ -173,12 +173,16 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
             }
             cell.textLabel?.text = "sent by: \(name)"
         }
+            
         // NO IMAGE!
         else {
             let text = message[Constants.MessageFields.text] ?? ""
             cell.textLabel?.text = name + ": " + text
+            
             // DEFAULT IMAGE
             cell.imageView?.image = UIImage(named: "ic_account_circle")
+            
+            // CHECK AGAIN FOR PHOTO URL    MESSAGE["PHOTOURL"]
             if let photoURL = message[Constants.MessageFields.photoURL], let URL = URL(string: photoURL),
                 let data = try? Data(contentsOf: URL) {
                 cell.imageView?.image = UIImage(data: data)
@@ -186,30 +190,38 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
         }
         return cell
     }
+    
 
   // UITextViewDelegate protocol methods
   func textFieldShouldReturn(_ textField: UITextField) -> Bool {
     guard let text = textField.text else { return true }
     textField.text = ""
     view.endEditing(true)
+    
+            // DATA = ["TEXT": TEXT]
     let data = [Constants.MessageFields.text: text]
     sendMessage(withData: data)
     return true
   }
 
+    // SENDS MESSAGE REQUIRES THE USE OF A DICTIONARY
     func sendMessage(withData data: [String: String]) {
         var mdata = data
+        
+        // ADD ["NAME": CURRENT USER NAME] TO THE DICTIONARY
         mdata[Constants.MessageFields.name] = Auth.auth().currentUser?.displayName
+        
+        // *** NOT SURE ABOUT THIS BECAUSE DATA CAN ALREADY HAVE AN IMAGE URL ***
         if let photoURL = Auth.auth().currentUser?.photoURL {
             mdata[Constants.MessageFields.photoURL] = photoURL.absoluteString
         }
         
-        // Push data to Firebase Database
+        // PUSH DATA TO FIREBASE DATABASE UNDER "MESSAGES"
         self.ref.child("messages").childByAutoId().setValue(mdata)
     }
 
-  // MARK: - Image Picker
-
+ 
+    // BASIC IMAGE PICKER CONTROLLER, CAN USE EITHER THE CAMERA OR THE PHOTO LIBRARY
   @IBAction func didTapAddPhoto(_ sender: AnyObject) {
     let picker = UIImagePickerController()
     picker.delegate = self
@@ -221,6 +233,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
 
     present(picker, animated: true, completion:nil)
   }
+    
 
     func imagePickerController(_ picker: UIImagePickerController,
                                didFinishPickingMediaWithInfo info: [String : Any]) {
@@ -235,6 +248,8 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                 let imageFile = contentEditingInput?.fullSizeImageURL
                 let filePath = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000))/\((referenceURL as AnyObject).lastPathComponent!)"
                 guard let strongSelf = self else { return }
+                
+                // UPLOADING PHOTO FROM LIBRARY TO FIREBASE STORAGE
                 strongSelf.storageRef.child(filePath)
                     .putFile(from: imageFile!, metadata: nil) { (metadata, error) in
                         if let error = error {
@@ -242,15 +257,24 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                             print("Error uploading: \(nsError.localizedDescription)")
                             return
                         }
+                        
+                        // SEND MESSAGE WITH IMAGE
                         strongSelf.sendMessage(withData: [Constants.MessageFields.imageURL: strongSelf.storageRef.child((metadata?.path)!).description])
                 }
             })
-        } else {
+        }
+        // USE THE CAMERA TO GET A PHOTO
+        else {
             guard let image = info[UIImagePickerControllerOriginalImage] as? UIImage else { return }
+            
+            // 80% COMPRESSION
             let imageData = UIImageJPEGRepresentation(image, 0.8)
+            // USER ID + CURRENT TIME
             let imagePath = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000)).jpg"
             let metadata = StorageMetadata()
             metadata.contentType = "image/jpeg"
+            
+            // UPLOAD IMAGE TO FIREBASE STORAGE
             self.storageRef.child(imagePath)
                 .putData(imageData!, metadata: metadata) { [weak self] (metadata, error) in
                     if let error = error {
@@ -258,16 +282,20 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
                         return
                     }
                     guard let strongSelf = self else { return }
+                    // SEND A MESSAGE WITH AN IMAGE
                     strongSelf.sendMessage(withData: [Constants.MessageFields.imageURL: strongSelf.storageRef.child((metadata?.path)!).description])
             }
         }
     }
     
     
+    
+    // CANCEL IMAGE PICKER
   func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
     picker.dismiss(animated: true, completion:nil)
   }
 
+    // BASIC SIGN OUT OF APPLICATION
     @IBAction func signOut(_ sender: UIButton) {
         let firebaseAuth = Auth.auth()
         do {
@@ -277,7 +305,8 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
             print ("Error signing out: \(signOutError.localizedDescription)")
         }
     }
-
+    
+    // SHOW ALERT FUNCTION, TAKES IN TWO STRINGS
   func showAlert(withTitle title: String, message: String) {
     DispatchQueue.main.async {
         let alert = UIAlertController(title: title,
@@ -288,6 +317,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     }
   }
     
+    // INVITE PEOPLE TO USE THIS APPLICATION
     @IBAction func inviteTapped(_ sender: AnyObject) {
         if let invite = Invites.inviteDialog() {
             invite.setInviteDelegate(self)
@@ -307,6 +337,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
         }
     }
     
+    // FINISH APPLICATION INVITE
     func inviteFinished(withInvitations invitationIds: [Any], error: Error?) {
         if let error = error {
             print("Failed: \(error.localizedDescription)")
